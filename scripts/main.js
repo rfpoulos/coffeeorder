@@ -1,5 +1,34 @@
+var saveOrders = function(array) {
+    var string = JSON.stringify(array);
+    localStorage.setItem('submittedOrders', string);
+    console.log('I saved data!')
+}
 
+var getOrders = function() {
+    var savedOrders = localStorage.getItem('submittedOrders');
+    var parsedOrders = JSON.parse(savedOrders);
+    if (savedOrders !== null) {
+        allOrders = parsedOrders;
+        allOrders.forEach(function(item){
+            generateOrder(item);
+    })
+}
+}
 
+var saveCounter = function(counter) {
+    var string = JSON.stringify(counter);
+    localStorage.setItem('uniqueCount', string);
+    console.log('I saved counter!')
+}
+var getCounter = function() {
+    var savedCount = localStorage.getItem('uniqueCount');
+    parsedCount = JSON.parse(savedCount)
+    if (parsedCount === null){
+        return 0;
+    } else {
+        return parsedCount;
+    }
+};
 // CREATE THE VARIABLES FOR THE DOM ELEMENTS WE NEED TO WORK WITH
 var orders = document.querySelector('.list-orders');
 var coffeeForm = document.querySelector("[data-coffee-order='form']");
@@ -9,19 +38,31 @@ var size = document.querySelector("[name='size']");
 var flavor = document.querySelector("[name='flavor']");
 var strength = document.querySelector("[name='strength']");
 
-allOrders = []
-var count = 0;
-var generateID = function() {
-    return ++count;
-}
-var removerOrder = function(event) {
+var removeOrder = function(event) {
     allOrders.forEach(function(item, index){
         if (item.uniqueID === event.currentTarget.getAttribute("thisID")) {
             allOrders.splice(index, 1);
         };
     });
     orders.removeChild(event.currentTarget);
+    saveOrders(allOrders);
 }
+var generateOrder = function(currentOrder) {
+    var order = document.createElement('li');
+    order.textContent = currentOrder['order'] + currentOrder['email'] + currentOrder['size'] + currentOrder['flavor'] + currentOrder['strength'];
+    order.setAttribute('thisID', currentOrder['uniqueID']);
+    order.addEventListener("click", removeOrder);
+    orders.appendChild(order);
+}
+var allOrders = [];
+getOrders();
+var count = getCounter();
+var generateID = function() {
+    ++count
+    saveCounter(count);
+    return count;
+}
+
 var recordOrder = function(event) {
     event.preventDefault();
     var currentOrder = {order: coffeeOrder.value,
@@ -31,12 +72,9 @@ var recordOrder = function(event) {
         strength: strength.value,
         uniqueID: generateID().toString()
     };
-    var order = document.createElement('li');
-    order.textContent = currentOrder['order'] + currentOrder['email'] + currentOrder['size'] + currentOrder['flavor'] + currentOrder['strength'];
-    order.setAttribute('thisID', currentOrder['uniqueID']);
-    order.addEventListener("click", removerOrder);
-    orders.appendChild(order);
     allOrders.push(currentOrder);
+    generateOrder(currentOrder);
+    saveOrders(allOrders);
 };
-coffeeForm.addEventListener("submit", recordOrder);
 
+coffeeForm.addEventListener("submit", recordOrder);
