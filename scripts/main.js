@@ -1,3 +1,12 @@
+var orders = document.querySelector('.list-orders');
+var coffeeForm = document.querySelector("[data-coffee-order='form']");
+var coffeeOrder = document.querySelector("[name='coffee']");
+var emailAddress = document.querySelector("[name='emailAddress']");
+var size = document.querySelector("[name='size']");
+var flavor = document.querySelector("[name='flavor']");
+var strength = document.querySelector("[name='strength']");
+var allOrders = [];
+
 var saveOrders = function(array) {
     var string = JSON.stringify(array);
     localStorage.setItem('submittedOrders', string);
@@ -29,14 +38,6 @@ var getCounter = function() {
         return parsedCount;
     }
 };
-// CREATE THE VARIABLES FOR THE DOM ELEMENTS WE NEED TO WORK WITH
-var orders = document.querySelector('.list-orders');
-var coffeeForm = document.querySelector("[data-coffee-order='form']");
-var coffeeOrder = document.querySelector("[name='coffee']");
-var emailAddress = document.querySelector("[name='emailAddress']");
-var size = document.querySelector("[name='size']");
-var flavor = document.querySelector("[name='flavor']");
-var strength = document.querySelector("[name='strength']");
 
 var removeOrder = function(event) {
     allOrders.forEach(function(item, index){
@@ -49,12 +50,11 @@ var removeOrder = function(event) {
 }
 var generateOrder = function(currentOrder) {
     var order = document.createElement('li');
-    order.textContent = currentOrder['order'] + currentOrder['email'] + currentOrder['size'] + currentOrder['flavor'] + currentOrder['strength'];
+    order.textContent = currentOrder['order'] + currentOrder['email'] + currentOrder['size'] + currentOrder['flavor'] + currentOrder['strength'] + " Remove: X";
     order.setAttribute('thisID', currentOrder['uniqueID']);
     order.addEventListener("click", removeOrder);
     orders.appendChild(order);
 }
-var allOrders = [];
 getOrders();
 var count = getCounter();
 var generateID = function() {
