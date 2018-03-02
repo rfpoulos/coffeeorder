@@ -1,80 +1,64 @@
+var URL = 'http://dc-coffeerun.herokuapp.com/api/coffeeorders';
 var orders = document.querySelector('.list-orders');
 var coffeeForm = document.querySelector("[data-coffee-order='form']");
 var coffeeOrder = document.querySelector("[name='coffee']");
 var emailAddress = document.querySelector("[name='emailAddress']");
-var size = document.querySelector("[name='size']");
 var flavor = document.querySelector("[name='flavor']");
 var strength = document.querySelector("[name='strength']");
 var allOrders = [];
 
-var saveOrders = function(array) {
-    var string = JSON.stringify(array);
-    localStorage.setItem('submittedOrders', string);
-    console.log('I saved data!')
-}
 
 var getOrders = function() {
-    var savedOrders = localStorage.getItem('submittedOrders');
-    var parsedOrders = JSON.parse(savedOrders);
-    if (savedOrders !== null) {
-        allOrders = parsedOrders;
-        allOrders.forEach(function(item){
-            generateOrder(item);
-    })
+    $.get(URL, function(data) {
+        newArray = Object.values(data);
+        if (newArray !== null) {
+            newArray.forEach(function(item){
+                generateOrder(item);
+                allOrders.push(item);
+            });
+        };
+    });
 }
-}
-
-var saveCounter = function(counter) {
-    var string = JSON.stringify(counter);
-    localStorage.setItem('uniqueCount', string);
-    console.log('I saved counter!')
-}
-var getCounter = function() {
-    var savedCount = localStorage.getItem('uniqueCount');
-    parsedCount = JSON.parse(savedCount)
-    if (parsedCount === null){
-        return 0;
-    } else {
-        return parsedCount;
-    }
-};
 
 var removeOrder = function(event) {
+    var myTarget = event.currentTarget;
+    myTarget.removeEventListener("click", removeOrder);
     allOrders.forEach(function(item, index){
-        if (item.uniqueID === event.currentTarget.getAttribute("thisID")) {
+        if (item._id === myTarget.getAttribute("data-thisID")) {
+            $.ajax({type:"DELETE",
+                 url:URL + "/" + item['emailAddress']});
             allOrders.splice(index, 1);
         };
     });
-    orders.removeChild(event.currentTarget);
-    saveOrders(allOrders);
+    var removeLi = function(){
+        orders.removeChild(myTarget);
+    }
+    setTimeout(removeLi, 2000);
 }
 var generateOrder = function(currentOrder) {
     var order = document.createElement('li');
-    order.textContent = currentOrder['order'] + currentOrder['email'] + currentOrder['size'] + currentOrder['flavor'] + currentOrder['strength'] + " Remove: X";
-    order.setAttribute('thisID', currentOrder['uniqueID']);
+    order.textContent = currentOrder['coffee'] + currentOrder['emailAddress'] + currentOrder['size'] + currentOrder['flavor'] + currentOrder['strength'] + " Remove: X";
+    order.setAttribute('data-thisID', currentOrder['_id']);
     order.addEventListener("click", removeOrder);
     orders.appendChild(order);
 }
 getOrders();
-var count = getCounter();
-var generateID = function() {
-    ++count
-    saveCounter(count);
-    return count;
+var saveOrderToDataBase = function(currentOrder){
+    $.post(URL, currentOrder, function(data){
+        generateOrder(data);
+        allOrders.push(data);
+    });
 }
-
 var recordOrder = function(event) {
     event.preventDefault();
-    var currentOrder = {order: coffeeOrder.value,
-        email: emailAddress.value,
-        size: size.value,
-        flavor: flavor.value,
-        strength: strength.value,
-        uniqueID: generateID().toString()
+    var size = document.querySelector("[name='size']:checked");
+    var currentOrder = {"coffee": coffeeOrder.value,
+        "emailAddress": emailAddress.value,
+        "size": size.value,
+        "flavor": flavor.value,
+        "strength": strength.value
     };
-    allOrders.push(currentOrder);
-    generateOrder(currentOrder);
-    saveOrders(allOrders);
+    saveOrderToDataBase(currentOrder);
 };
 
 coffeeForm.addEventListener("submit", recordOrder);
