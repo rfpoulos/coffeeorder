@@ -20,27 +20,53 @@ var recordOrder = function(event) {
 };
 
 var saveOrderToDataBase = function(currentOrder){
-    $.post(URL, currentOrder, function(data){
+    let data = JSON.stringify(currentOrder);
+    var saveToDataBasePromise = fetch(URL, {
+        method: 'POST',
+        headers: new Headers({
+            'Content-Type': 'application/json'
+        }),
+        body: data
+    })
+    saveToDataBasePromise.then(function(response){
+        return response.json()
+    })
+    .then(function(data) {
         generateOrder(data);
         localOrdersArray.push(data);
-    });
+    })
+    .catch(function(error){
+        console.log('error');
+    })
 }
 
 var generateOrder = function(currentOrder) {
     var order = document.createElement('li');
     order.textContent = currentOrder['coffee'] + currentOrder['emailAddress'] + currentOrder['size'] + currentOrder['flavor'] + currentOrder['strength'] + " Remove: X";
     order.setAttribute('data-thisID', currentOrder['_id']);
+    order.setAttribute('data-isClicked', 'no');
     order.addEventListener("click", removeOrder);
     orders.appendChild(order);
 }
 var removeOrder = function(event) {
     var myTarget = event.currentTarget;
+    myTarget['data-isClicked'] = 'yes';
+    console.log('removeOrder: ' + myTarget['data-isClicked']);
     myTarget.removeEventListener("click", removeOrder);
-    deleteItemFromServer(localOrdersArray, myTarget);
-    var removeRow = function(){
-        orders.removeChild(myTarget);
+    myTarget.addEventListener("click", changeMind);
+    var removeOrderItem = function(){
+        if (myTarget['data-isClicked'] === 'yes')
+            orders.removeChild(myTarget);
+            deleteItemFromServer(localOrdersArray, myTarget);
     }
-    setTimeout(removeRow, 1000);
+    setTimeout(removeOrderItem, 1000);
+}
+var changeMind = function(event) {
+    var myTarget = event.currentTarget;
+    myTarget['data-isClicked'] = 'no';
+    myTarget.removeEventListener("click", changeMind);
+    myTarget.addEventListener("click", removeOrder);
+    console.log('change mind: ' + myTarget['data-isClicked']);
 }
 var deleteItemFromServer = function(anArray, element) {
     anArray.forEach(function(item, index){
@@ -51,8 +77,7 @@ var deleteItemFromServer = function(anArray, element) {
         };
     });
 }
-var getOrders = function() {
-    $.get(URL, function(data) {
+var getOrders = function(data) {
         var newArray = Object.values(data);
         localOrdersArray = newArray;
         if (newArray !== null) {
@@ -60,8 +85,16 @@ var getOrders = function() {
                 generateOrder(item);
             });
         };
-    });
-}
+    };
+var aPromise = fetch(URL)
+    .then(function(response){
+        return response.json()
+    })
+    .then(function(data) {
+        return getOrders(data);  
+    })
+    .catch(function(error){
+        console.log('error');
+    })
 
 coffeeForm.addEventListener("submit", recordOrder);
-getOrders();
